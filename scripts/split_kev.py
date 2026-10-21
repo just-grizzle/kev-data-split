@@ -26,7 +26,7 @@ for v in vulns:
         continue
 
     target = Path(m.group(1)) / f"{cve}.json"
-    content = json.dumps(v, indent=2, ensure_ascii=False) + "\n"
+    content = json.dumps(v, separators=(",", ":"), ensure_ascii=False) + "\n"
 
     if target.exists():
         if target.read_text(encoding="utf-8") == content:
