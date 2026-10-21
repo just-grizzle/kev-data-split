@@ -39,5 +39,6 @@ jobs:
             echo "Keine Änderungen"
           else
             git commit -m "KEV-Update $(date -u +%F)"
+            git pull --rebase origin "$GITHUB_REF_NAME"
             git push
           fi
