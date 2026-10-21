@@ -1,0 +1,43 @@
+name: KEV in Einzeldateien aufteilen
+
+on:
+  schedule:
+    - cron: '54 2 * * *'   # 02:54 UTC = 03:54 MEZ (Winterzeit)
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: kev-split
+  cancel-in-progress: false
+
+env:
+  JSON_URL: https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json
+
+jobs:
+  split:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Repo auschecken
+        uses: actions/checkout@v4
+
+      - name: Katalog herunterladen
+        run: |
+          curl --retry 3 --retry-delay 5 --connect-timeout 30 --max-time 60 \
+            -fSLo "$RUNNER_TEMP/kev.json" "$JSON_URL"
+
+      - name: In Einzeldateien aufteilen
+        run: python3 scripts/split_kev.py "$RUNNER_TEMP/kev.json"
+
+      - name: Committen und pushen
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "Keine Änderungen"
+          else
+            git commit -m "KEV-Update $(date -u +%F)"
+            git push
+          fi
